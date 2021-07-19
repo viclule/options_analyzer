@@ -3,9 +3,10 @@ from datetime import datetime
 from abc import ABC, abstractclassmethod
 from csv import reader
 
+import pandas as pd
 from pydantic import BaseModel
-from pande
 
+from options_freedom.models.constants import time_stamp
 from options_freedom.utils import files_in_path
 
 
@@ -23,23 +24,27 @@ class SymbolData(ABC):
 
     symbol: Symbol
     quotes: Dict[datetime, Quote] = []
-
-    def __init__(self, data_path: Text):
-        self._data_path = data_path
+    load_dir: Text
 
     @abstractclassmethod
-    def load(self, adapter: Dict[Text, Text]):
+    def load(self, adapter: Dict[Text, Text], hour: int = None):
         """load the quotes from csv file(s)"""
-        self.quotes = {}
+        self._df = pd.DataFrame(columns=[time_stamp, 'bid', 'ask'])
 
-        files = files_in_path(self._data_path)
+        files = files_in_path(self.load_dir)
         for f in files:
-            df
-                for row in csv_reader:
+            df = pd.read_csv(f'{self.load_dir}/{f}',
+                             encoding="ISO-8859-1", engine='c',
+                             usecols=['Date', 'Close', 'Adj Close'])
+            df = df.rename(adapter, axis='columns')
+            time_format = '%Y-%M-%d'
+            if hour:
+                df[time_stamp] = df[time_stamp].astype(str) + f'-{str(hour)}'
+                time_format = '%Y-%M-%d-%H'
+            df[time_stamp] = pd.to_datetime(df[time_stamp], format=time_format)
+            self._df = self._df.append(df, ignore_index=True)
 
-                    self.quotes[] = Quote(**args)
-
-    @abstractclassmethod
     def get_quote(self, timestamp: datetime) -> Quote:
         """extrat the closest quote for a timestamp"""
-        pass
+        row = self._df.iloc[self._df[time_stamp].sub(timestamp).abs().idxmin()]
+        return row['bid']

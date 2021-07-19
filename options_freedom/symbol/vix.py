@@ -1,25 +1,15 @@
-from datetime import datetime
-from typing import Dict, Text
-
-from options_freedom.symbol.base import SymbolData, Symbol, Quote
-from options_freedom.utils import files_in_path
+from options_freedom.symbol.base import Symbol, SymbolData
+from options_freedom.models.constants import time_stamp
 
 
 class VIX(SymbolData):
-    symbol = Symbol('VIX')
+    symbol = Symbol(symbol='VIX')
+    load_dir = "options_freedom/data/quotes/vix"
 
     def load(self):
         adapter = {
-            'time_stamp': 'quotedate',
-            'bid': 'bid',
-            'ask': 'ask'
+            'Date': time_stamp,
+            'Close': 'bid',
+            'Adj Close': 'ask'
         }
-        return super().load(adapter)
-
-    def get_quote(self, timestamp: datetime) -> Quote:
-        return super().get_quote(timestamp)
-
-
-load_dir = "options_analyzer/options_freedom/data/quotes/vix"
-
-vix = VIX(load_dir)
+        super().load(adapter, hour=15)

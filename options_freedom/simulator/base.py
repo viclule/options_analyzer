@@ -6,7 +6,6 @@ from options_freedom.models.trade import Trade
 
 
 class Simulator:
-
     def __init__(self, strategy: Strategy, start: datetime, end: datetime):
         self._strategy = strategy
         self._start = start

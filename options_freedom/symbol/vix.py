@@ -9,3 +9,7 @@ class VIX(SymbolData):
     def load(self):
         adapter = {"Date": time_stamp, "Close": "bid", "Adj Close": "ask"}
         super().load(adapter, hour=15)
+
+
+vix = VIX()
+vix.load()

@@ -1,3 +1,5 @@
+import logging
+
 from typing import Text, Dict
 from datetime import datetime
 from abc import ABC, abstractclassmethod
@@ -6,8 +8,10 @@ from dateutil.parser import parse
 import pandas as pd
 from pydantic import BaseModel
 
-from options_freedom.models.constants import time_stamp, symbol_columns
+from options_freedom.models.constants import time_stamp
 from options_freedom.utils import files_in_path
+
+logger = logging.getLogger(__name__)
 
 
 class Symbol(BaseModel):
@@ -18,6 +22,10 @@ class Quote(BaseModel):
     time_stamp: datetime
     bid: float
     ask: float
+
+    @property
+    def mid(self):
+        return (self.bid + self.ask) / 2
 
 
 class SymbolData(ABC):
@@ -44,6 +52,7 @@ class SymbolData(ABC):
             li.append(df)
         self._df = pd.concat(li, axis=0, ignore_index=True)
         self._df = self._df.reset_index(drop=True)
+        logger.info(f'{self.symbol.symbol} data was loaded!')
 
     def get_quote(self, timestamp: datetime) -> Quote:
         """extract the closest quote for a timestamp"""

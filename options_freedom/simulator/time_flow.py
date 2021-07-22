@@ -7,11 +7,11 @@ from datetime import datetime
 
 
 class TimeFlow:
-    def __init__(self, start: datetime, end: datetime, time: datetime):
+    def __init__(self, start: datetime, end: datetime):
         pass
 
     def next(self) -> datetime:
-        """Next time in the sequence.
+        """Next market open day in the sequence.
 
         Returns:
             datetime: [description]

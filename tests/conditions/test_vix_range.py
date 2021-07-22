@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from options_freedom.conditions.open.vix_range import VIXRange
 

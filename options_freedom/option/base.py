@@ -73,8 +73,6 @@ class OptionData(ABC):
             (self._df["under"] == option.under)
             & (self._df["type"] == option.type.value)
             & (self._df["strike"] == option.strike)
-            & (self._df["delta"] > 0.13)
-            & (0.32 < self._df["delta"])
             & (self._df["expiration"] == option.expiration.strftime("%Y-%m-%d"))
         ]
         option_df = option_df.reset_index(drop=True)

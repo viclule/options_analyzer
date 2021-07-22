@@ -1,13 +1,13 @@
 import logging
-from datetime import datetime, time
+from datetime import datetime
 
-from options_freedom.conditions.base import Condition
+from options_freedom.conditions.base import OpenCondition
 from options_freedom.symbol.vix import vix
 
 logger = logging.getLogger(__name__)
 
 
-class VIXRange(Condition):
+class VIXRange(OpenCondition):
     def __init__(self, lower: float, upper: float):
         if lower < 0 or lower > upper:
             raise ValueError("Unvalid lower value")
@@ -19,6 +19,6 @@ class VIXRange(Condition):
     def can_open(self, time_stamp: datetime) -> bool:
         vix_quote = vix.get_quote(time_stamp)
         if self._upper > vix_quote.mid > self._lower:
+            logger.info("Condition to open satisfied!")
             return True
-        logger.info("Condition not satisfied!")
         return False

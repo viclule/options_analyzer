@@ -79,3 +79,22 @@ class OptionData(ABC):
         # find the quote for the closest timestamp
         row = option_df.iloc[option_df[time_stamp].sub(timestamp).abs().idxmin()]
         return OptionQuote(**row.to_dict())
+
+    def get_option(self, type: Type, today: datetime, expiration: datetime, delta: float) -> Option:
+        """extract the closest Option for a delta and expiration date"""
+        # prefilter for the given expiration
+        option_df = self._df[
+            (self._df["expiration"] == expiration.strftime("%Y-%m-%d"))
+            & (self._df["time_stamp"] == today.strftime("%Y-%m-%d"))
+            & (self._df["type"] == type.value)
+        ]
+        option_df = option_df.reset_index(drop=True)
+        # find the quote for the closest timestamp
+        print(option_df.head())
+        row = option_df.iloc[option_df['delta'].sub(delta).abs().idxmin()]
+        return Option(
+            under=row['under'],
+            type=Type(row['type']),
+            strike=row['strike'],
+            expiration=parse(row['expiration'])
+        )

@@ -1,12 +1,10 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from options_freedom.option.base import Option, Type
-from options_freedom.option.spy import SPY
+from options_freedom.option.spy import spy
 
 
 def test_get_quote():
-    spy = SPY()
-    spy.load(load_dir="tests/data/options/spy")
     quote = spy.get_quote(
         Option(
             under=spy.symbol.symbol,
@@ -17,3 +15,15 @@ def test_get_quote():
         datetime(2006, 1, 4, 15),
     )
     assert quote.bid == 6.3
+
+
+def test_get_option():
+    option = spy.get_option(
+        Type.P,
+        datetime(2006, 1, 4),
+        datetime(2006, 9, 16),
+        0.3
+    )
+    assert option.expiration == datetime(2006, 9, 16)
+    assert option.strike == 122.0
+    assert option.delta == 0.3

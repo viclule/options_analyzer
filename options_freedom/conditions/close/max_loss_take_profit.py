@@ -14,14 +14,14 @@ class MaxLossTakeProfit(CloseCondition):
         self._max_loss_percent = max_loss_percent
         self._take_profit_percent = take_profit_percent
 
-    def can_close(self, p_l: float, max_win: float) -> bool:
+    def can_close(self, p_l: float, max_profit: float) -> bool:
         if p_l < 0:
             p_l = abs(p_l)
-            if 100.0 * p_l / max_win >= self._max_loss_percent:
+            if 100.0 * p_l / max_profit >= self._max_loss_percent:
                 logger.info("Max loss - condition satisfied!")
                 return True
         else:
-            if 100.0 * p_l / max_win >= self._take_profit_percent:
+            if 100.0 * p_l / max_profit >= self._take_profit_percent:
                 logger.info("Take profit - condition satisfied!")
                 return True
         return False

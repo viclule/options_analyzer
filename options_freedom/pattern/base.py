@@ -43,7 +43,7 @@ class Pattern(BaseModel):
 
     @property
     def max_loss(self):
-        # to be implemented
+        # to be implemented by the pattern
         pass
 
     @property

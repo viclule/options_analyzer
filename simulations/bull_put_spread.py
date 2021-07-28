@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
-from options_freedom.symbol.base import Symbol
 from typing import Dict
 
+
+from options_freedom.symbol.base import Symbol
 from options_freedom.pattern.bull_put_spread import BullPutSpread
 from options_freedom.conditions.open.vix_range import VIXRange
 from options_freedom.option.spy import spy

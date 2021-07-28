@@ -5,6 +5,11 @@ opened at 10:45am
 """
 from datetime import datetime
 
+from options_freedom.option.spy import spy
+from options_freedom.models.constants import time_stamp
+
+market_days = sorted(list(set(spy._df[time_stamp].tolist())))
+
 
 class TimeFlow:
     def __init__(self, start: datetime, end: datetime):
@@ -16,7 +21,8 @@ class TimeFlow:
         Returns:
             datetime: [description]
         """
-        pass
+        for day in list(market_days):
+            yield day
 
     def reset(self):
         pass

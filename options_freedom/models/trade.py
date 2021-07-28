@@ -1,3 +1,4 @@
+from logging import currentframe
 from typing import Optional
 
 from pydantic import BaseModel
@@ -22,4 +23,5 @@ class Trade(BaseModel):
         return self.finish_stamp - self.start_stamp
 
     def p_l(self, timestamp: datetime) -> float:
-        return self.open_price - self.pattern.price(timestamp)
+        current_price = self.pattern.bid(timestamp)
+        return self.open_price - current_price

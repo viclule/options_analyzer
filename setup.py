@@ -18,14 +18,18 @@ with open(os.path.join(here, 'options_freedom', 'VERSION')) as f:
         exit("Invalid package version in %s" % os.path.join(here, 'options_freedom', 'VERSION'))
 
 setup(
-    name="options_freedom",
+    name="options-freedom",
     version=version,
     description="Options analyzer.",
     long_description="Options analyzer.",
     url="https://github.com/viclule/options_analyzer",
     author='Vicente Guerrero',
     author_email='vic.lule@googlemail.com',
-    packages=["options_freedom"],
+    packages=["options_freedom", "options_freedom.symbol", "options_freedom.conditions",
+    "options_freedom.conditions.close", "options_freedom.conditions.open", "options_freedom.data",
+    "options_freedom.data.options", "options_freedom.data.quotes", "options_freedom.data.options.spy", "options_freedom.data.quotes.vix",
+    "options_freedom.models", "options_freedom.option", "options_freedom.pattern",
+    "options_freedom.simulator", "options_freedom.strategy"],
     include_package_data=True,
     install_requires=requirements,
 )

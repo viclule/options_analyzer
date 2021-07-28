@@ -18,6 +18,14 @@ def test_get_quote():
 
 
 def test_get_option():
+    # on the exact day
     option = spy.get_option(Type.P, datetime(2006, 1, 4, 15), datetime(2006, 9, 16), 0.28)
+    assert option.expiration == datetime(2006, 9, 16)
+    assert option.strike == 122.0
+
+
+def test_get_option():
+    # the closest day
+    option = spy.get_option(Type.P, datetime(2006, 1, 4, 15), datetime(2006, 9, 15), 0.28)
     assert option.expiration == datetime(2006, 9, 16)
     assert option.strike == 122.0

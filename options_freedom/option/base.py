@@ -1,5 +1,5 @@
-from typing import Text, Optional, Dict
-from datetime import datetime
+from typing import Text, Optional, Dict, List
+from datetime import datetime, timedelta
 from enum import Enum
 from abc import ABC, abstractclassmethod
 from dateutil.parser import parse
@@ -85,11 +85,16 @@ class OptionData(ABC):
     ) -> Option:
         """extract the closest Option for a delta and expiration date"""
         # prefilter for the given expiration
-        option_df = self._df[
-            (self._df["expiration"] == expiration.strftime("%Y-%m-%d"))
-            & (self._df["time_stamp"] == today)
+        prefilter_df = self._df[
+            (self._df["time_stamp"] == today)
             & (self._df["type"] == type.value)
         ]
+        for day in self._set_search_date(expiration):
+            option_df = prefilter_df[
+                (prefilter_df["expiration"] == day.strftime("%Y-%m-%d"))
+            ]
+            if not option_df.empty:
+                break
         option_df = option_df.reset_index(drop=True)
         # find the quote for the closest timestamp
         row = option_df.iloc[(abs(option_df['delta']) - delta).abs().argsort()[0]]
@@ -100,3 +105,18 @@ class OptionData(ABC):
             strike=row["strike"],
             expiration=parse(row["expiration"]),
         )
+
+    def _set_search_date(self, day: datetime) -> List[datetime]:
+        """Set of days around the desired one to search
+
+        Args:
+            day (datetime): [description]
+
+        Returns:
+            List[datetime]: [description]
+        """
+        days = [day]
+        for i in range(1, 6):
+            days.append(day + timedelta(days=i))
+            days.append(day - timedelta(days=i))
+        return days

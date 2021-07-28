@@ -6,7 +6,7 @@
 # from options_freedom.option.base import Type
 
 
-# today = datetime(2006, 1, 4)
+# today = datetime(2006, 1, 4, 15)
 # # days for expiration target
 # expiration_target = timedelta(days=45)
 # # delta for the legs

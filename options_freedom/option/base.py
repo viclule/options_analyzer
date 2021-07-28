@@ -89,6 +89,7 @@ class OptionData(ABC):
             (self._df["time_stamp"] == today)
             & (self._df["type"] == type.value)
         ]
+        # search in the exact day, and from there outwards
         for day in self._set_search_date(expiration):
             option_df = prefilter_df[
                 (prefilter_df["expiration"] == day.strftime("%Y-%m-%d"))

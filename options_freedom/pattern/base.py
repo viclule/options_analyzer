@@ -13,9 +13,10 @@ class Pattern(BaseModel):
     commissions: float
     short: List[Option]
     long: List[Option]
+    start_stamp: datetime
 
-    def price(self, timestamp: datetime, ask=False) -> float:
-        """The price at the moment. Bid price per default
+    def ask(self, timestamp: datetime) -> float:
+        """The price at the moment. Ask
 
         Args:
             timestamp (datetime): [description]
@@ -25,15 +26,29 @@ class Pattern(BaseModel):
             float: [description]
         """
         (shorts, longs) = self._get_quotes(timestamp)
-        if ask:
-            return sum(q.ask for q in shorts + longs)
-        return sum(q.bid for q in shorts + longs)
+        return sum(q.bid for q in shorts) + sum(q.ask for q in longs)
 
+    def bid(self, timestamp: datetime) -> float:
+        """The price at the moment. Bid
+
+        Args:
+            timestamp (datetime): [description]
+            ask (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            float: [description]
+        """
+        (shorts, longs) = self._get_quotes(timestamp)
+        return sum(q.ask for q in shorts) + sum(q.bid for q in longs)
+
+    @property
     def max_loss(self):
+        # to be implemented
         pass
 
+    @property
     def max_profit(self):
-        pass
+        return self.ask(self.start_stamp) - self.commissions
 
     def _get_quotes(self, timestamp) -> Tuple[List[OptionQuote], List[OptionQuote]]:
         short_quotes = [

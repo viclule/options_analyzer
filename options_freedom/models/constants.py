@@ -14,4 +14,4 @@ option_columns = [
     "under",
 ]
 
-comission_per_contract = 1.0
+comission_per_contract = 0.0

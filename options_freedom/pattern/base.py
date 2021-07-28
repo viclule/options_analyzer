@@ -35,19 +35,17 @@ class Pattern(BaseModel):
     def max_profit(self):
         pass
 
-    def _get_quotes(
-        self, timestamp
-    ) -> Tuple[List[OptionQuote], List[OptionQuote]]:
+    def _get_quotes(self, timestamp) -> Tuple[List[OptionQuote], List[OptionQuote]]:
         short_quotes = [
             self._option_data().get_quote(short, timestamp) for short in self.short
-            ]
+        ]
         long_quotes = [
             self._option_data().get_quote(long, timestamp) for long in self.long
-            ]
+        ]
         return short_quotes, long_quotes
 
     def _option_data(self) -> OptionData:
         if self.symbol == Symbol(symbol="SPY"):
             return spy
         else:
-            raise ValueError('Symbol not supported yet.')
+            raise ValueError("Symbol not supported yet.")

@@ -52,7 +52,7 @@ class SymbolData(ABC):
             li.append(df)
         self._df = pd.concat(li, axis=0, ignore_index=True)
         self._df = self._df.reset_index(drop=True)
-        logger.info(f'{self.symbol.symbol} data was loaded!')
+        logger.info(f"{self.symbol.symbol} data was loaded!")
 
     def get_quote(self, timestamp: datetime) -> Quote:
         """extract the closest quote for a timestamp"""

@@ -52,7 +52,6 @@ class OptionData(ABC):
         for f in files:
             df = pd.read_csv(
                 f"{self.load_dir}/{f}",
-                # encoding="ISO-8859-1", engine='c',
                 usecols=list(adapter.keys()),
             )
             df = df.rename(adapter, axis="columns")
@@ -63,7 +62,8 @@ class OptionData(ABC):
         self._df = pd.concat(li, axis=0, ignore_index=True)
         self._df["delta"] = self._df["delta"].abs()
         # reduce to the deltas we are interested
-        self._df = self._df[(self._df["delta"] > 0.13) & (0.32 < self._df["delta"])]
+        # not reducable
+        # self._df = self._df[(0.13 < self._df["delta"]) & (self._df["delta"] < 0.32)]
         self._df = self._df.reset_index(drop=True)
 
     def get_quote(self, option: Option, timestamp: datetime) -> OptionQuote:
@@ -80,21 +80,23 @@ class OptionData(ABC):
         row = option_df.iloc[option_df[time_stamp].sub(timestamp).abs().idxmin()]
         return OptionQuote(**row.to_dict())
 
-    def get_option(self, type: Type, today: datetime, expiration: datetime, delta: float) -> Option:
+    def get_option(
+        self, type: Type, today: datetime, expiration: datetime, delta: float
+    ) -> Option:
         """extract the closest Option for a delta and expiration date"""
         # prefilter for the given expiration
         option_df = self._df[
             (self._df["expiration"] == expiration.strftime("%Y-%m-%d"))
-            & (self._df["time_stamp"] == today.strftime("%Y-%m-%d"))
+            & (self._df["time_stamp"] == today)
             & (self._df["type"] == type.value)
         ]
         option_df = option_df.reset_index(drop=True)
         # find the quote for the closest timestamp
-        print(option_df.head())
-        row = option_df.iloc[option_df['delta'].sub(delta).abs().idxmin()]
+        row = option_df.iloc[(abs(option_df['delta']) - delta).abs().argsort()[0]]
+        # row = option_df.iloc[option_df["delta"].sub(delta).abs().idxmin()]
         return Option(
-            under=row['under'],
-            type=Type(row['type']),
-            strike=row['strike'],
-            expiration=parse(row['expiration'])
+            under=row["under"],
+            type=Type(row["type"]),
+            strike=row["strike"],
+            expiration=parse(row["expiration"]),
         )

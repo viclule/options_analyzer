@@ -18,12 +18,6 @@ def test_get_quote():
 
 
 def test_get_option():
-    option = spy.get_option(
-        Type.P,
-        datetime(2006, 1, 4),
-        datetime(2006, 9, 16),
-        0.3
-    )
+    option = spy.get_option(Type.P, datetime(2006, 1, 4, 15), datetime(2006, 9, 16), 0.28)
     assert option.expiration == datetime(2006, 9, 16)
     assert option.strike == 122.0
-    assert option.delta == 0.3

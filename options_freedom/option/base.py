@@ -117,7 +117,7 @@ class OptionData(ABC):
             List[datetime]: [description]
         """
         days = [day]
-        for i in range(1, 13):
+        for i in range(1, 20):
             days.append(day + timedelta(days=i))
             days.append(day - timedelta(days=i))
         return days

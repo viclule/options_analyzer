@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict
+import pickle
+import os 
 
 from options_freedom.symbol.base import Symbol
 from options_freedom.pattern.bull_put_spread import BullPutSpread
@@ -10,13 +12,22 @@ from options_freedom.conditions.close.max_loss_take_profit import MaxLossTakePro
 from options_freedom.simulator.time_flow import TimeFlow
 from options_freedom.models.trade import Trade
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+def gen_results_path(filename: str):
+    return os.path.join(dir_path, "results/data", filename)
+
 
 def run():
+    filename = "BullPutSpread_30_15_45"
     # simulation time period
     start = datetime(2006, 1, 4)
-    end = datetime(2006, 4, 1)
+    end = datetime(2006, 3, 1)
     # days for expiration target
-    expiration_target = timedelta(45)
+    expiration_target = timedelta(days=45)
+    # in case no option for this target is available, this is the max tolerance
+    days_tolerance = timedelta(days=15)
+    delta_tolerance = 0.1  # 10%
     # delta for the legs
     delta_short_put = 0.30
     delta_long_put = 0.15
@@ -33,45 +44,56 @@ def run():
     trades: Dict[datetime, Trade] = {}
 
     timeflow = TimeFlow(start, end)
-    gen = timeflow.next()
-    today = next(gen)
+    gen = timeflow.gen()
+    today: datetime = next(gen)
     while today:
         # for each day in the period
         if not open_trade:
             # we can try to open a new trade
             if open_condition.can_open(today):
                 # find the closest legs for the given delta and expiration time
-                short_put = spy.get_option(
-                    Type.P,
-                    today,
-                    today + expiration_target,
-                    delta_short_put,
-                )
-                long_put = spy.get_option(
-                    Type.P,
-                    today,
-                    today + expiration_target,
-                    delta_long_put
-                )
-                pattern = BullPutSpread(
-                    symbol=Symbol(symbol="SPY"),
-                    short=[short_put],
-                    long=[long_put],
-                    start_stamp=today,
-                    expiration=short_put.expiration
-                )
-                # open it
-                trade = Trade(
-                    pattern=pattern,
-                    start_stamp=today,
-                    max_loss=pattern.max_loss,
-                    max_profit=pattern.ask(today),
-                    open_price=pattern.ask(today),
-                    under_price_open=pattern.under_price(today)
-                )
-                # add it
-                trades[today] = trade
-                open_trade: Trade = trade
+                try:
+                    short_put = spy.get_option(
+                        Type.P,
+                        today,
+                        today + expiration_target,
+                        delta_short_put,
+                    )
+                    long_put = spy.get_option(
+                        Type.P,
+                        today,
+                        today + expiration_target,
+                        delta_long_put
+                    )
+
+                    pattern = BullPutSpread(
+                        symbol=Symbol(symbol="SPY"),
+                        short=[short_put],
+                        long=[long_put],
+                        start_stamp=today,
+                        expiration=short_put.expiration
+                    )
+                    # open it
+                    trade = Trade(
+                        pattern=pattern,
+                        start_stamp=today,
+                        max_loss=pattern.max_loss,
+                        max_profit=pattern.ask(today),
+                        open_price=pattern.ask(today),
+                        under_price_open=pattern.under_price(today)
+                    )
+                    # add it if between tolerance
+                    if (pattern.max_duration < expiration_target + days_tolerance) or \
+                            (pattern.max_duration > expiration_target - days_tolerance):
+                        # open it       
+                        trades[today] = trade
+                        open_trade: Trade = trade
+                    else:
+                        # not viable trade
+                        pass
+                except Exception as e:
+                    # could not find options with the right conditions
+                    pass
 
         # try to close an open trade
         close: bool = False
@@ -80,10 +102,11 @@ def run():
             close = close_condition.can_close(
                 open_trade.p_l(today),
                 open_trade.max_profit)
-            if close:
+            if close or (today.replace(hour=0) == open_trade.pattern.expiration):
                 trades[open_trade.start_stamp].finish_stamp = today
                 trades[open_trade.start_stamp].under_price_close = open_trade.pattern.under_price(today)
                 trades[open_trade.start_stamp].profit_loss = open_trade.p_l(today)
+                trades[open_trade.start_stamp].finish_price = open_trade.pattern.bid(today)
                 open_trade = None
         if not close:
             # change day only if no trade was closed today
@@ -92,7 +115,9 @@ def run():
                 today = next(gen)
             except StopIteration:
                 break
-
+    # persist the results
+    with open(gen_results_path(filename), "wb") as f:
+        pickle.dump(trades, f)
     print(len(trades))
 
 

@@ -36,3 +36,10 @@ def test_get_option_2():
     option = spy.get_option(Type.P, datetime(2006, 1, 11, 15), datetime(2006, 2, 25), 0.28)
     assert option.expiration == datetime(2006, 2, 18)
     assert option.strike == 127.0
+
+
+def test_get_option_3():
+    # the closest day
+    option = spy.get_option(Type.P, datetime(2006, 2, 16, 15), datetime(2006, 4, 2), 0.3)
+    assert option.expiration == datetime(2006, 3, 18)
+    assert option.strike == 127.0

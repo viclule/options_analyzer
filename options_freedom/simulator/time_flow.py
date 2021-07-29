@@ -13,15 +13,15 @@ market_days = sorted(list(set(spy._df[time_stamp].tolist())))
 
 class TimeFlow:
     def __init__(self, start: datetime, end: datetime):
-        pass
+        self.set = [day for day in market_days if day >= start and day <= end]
 
-    def next(self) -> datetime:
+    def gen(self) -> datetime:
         """Next market open day in the sequence.
 
         Returns:
             datetime: [description]
         """
-        for day in list(market_days):
+        for day in self.set:
             yield day
 
     def reset(self):

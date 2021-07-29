@@ -57,7 +57,8 @@ def run():
                     symbol=Symbol(symbol="SPY"),
                     short=[short_put],
                     long=[long_put],
-                    start_stamp=today
+                    start_stamp=today,
+                    expiration=short_put.expiration
                 )
                 # open it
                 trade = Trade(
@@ -66,12 +67,14 @@ def run():
                     max_loss=pattern.max_loss,
                     max_profit=pattern.ask(today),
                     open_price=pattern.ask(today),
+                    under_price_open=pattern.under_price(today)
                 )
                 # add it
                 trades[today] = trade
                 open_trade: Trade = trade
 
         # try to close an open trade
+        close: bool = False
         if open_trade:
             temp = open_trade.p_l(today)
             close = close_condition.can_close(
@@ -79,12 +82,16 @@ def run():
                 open_trade.max_profit)
             if close:
                 trades[open_trade.start_stamp].finish_stamp = today
+                trades[open_trade.start_stamp].under_price_close = open_trade.pattern.under_price(today)
                 trades[open_trade.start_stamp].profit_loss = open_trade.p_l(today)
                 open_trade = None
-        try:
-            today = next(gen)
-        except StopIteration:
-            break
+        if not close:
+            # change day only if no trade was closed today
+            # since we can open a new one in the same day
+            try:
+                today = next(gen)
+            except StopIteration:
+                break
 
     print(len(trades))
 

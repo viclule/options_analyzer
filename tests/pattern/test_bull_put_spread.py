@@ -21,13 +21,18 @@ pattern = BullPutSpread(
     symbol=Symbol(symbol="SPY"),
     short=[short_put],
     long=[long_put],
-    start_stamp=today
+    start_stamp=today,
+    expiration=short_put.expiration
 )
 
 
 def test_properties():
     assert pattern.max_loss == 3.0  # change with comissions
     assert pattern.max_profit == 1.4  # change with comissions
+    assert pattern.expiration == datetime(2006, 2, 18)
+    assert pattern.max_duration.days == 44
+    assert pattern.under_price(today) == 127.22
+    assert pattern.under_price(pattern.expiration) == 128.88
     assert pattern.short[0].expiration == datetime(2006, 2, 18)
     assert pattern.short[0].strike == 125
     assert pattern.long[0].expiration == datetime(2006, 2, 18)

@@ -14,6 +14,7 @@ class Pattern(BaseModel):
     short: List[Option]
     long: List[Option]
     start_stamp: datetime
+    expiration: datetime
 
     def ask(self, timestamp: datetime) -> float:
         """The price at the moment. Ask
@@ -42,6 +43,10 @@ class Pattern(BaseModel):
         return sum(q.ask for q in shorts) + sum(q.bid for q in longs)
 
     @property
+    def max_duration(self):
+        return self.expiration - self.start_stamp
+
+    @property
     def max_loss(self):
         # to be implemented by the pattern
         pass
@@ -50,7 +55,10 @@ class Pattern(BaseModel):
     def max_profit(self):
         return self.ask(self.start_stamp) - self.commissions
 
-    def _get_quotes(self, timestamp) -> Tuple[List[OptionQuote], List[OptionQuote]]:
+    def under_price(self, timestamp: datetime):
+        return self._option_data().get_quote(self.short[0], timestamp).under_last
+
+    def _get_quotes(self, timestamp: datetime) -> Tuple[List[OptionQuote], List[OptionQuote]]:
         short_quotes = [
             self._option_data().get_quote(short, timestamp) for short in self.short
         ]

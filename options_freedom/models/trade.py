@@ -13,10 +13,12 @@ class Trade(BaseModel):
     max_loss: float
     max_profit: float
     open_price: float
+    under_price_open: float
     # this two can be added after closing the trade
     finish_stamp: Optional[datetime]
     finish_price: Optional[float]
     profit_loss: Optional[float]
+    under_price_close: Optional[float]
 
     @property
     def length(self) -> timedelta:

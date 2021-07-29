@@ -22,10 +22,17 @@ class Quote(BaseModel):
     time_stamp: datetime
     bid: float
     ask: float
+    bid_ma: float
+    ask_ma: float
 
     @property
     def mid(self):
         return (self.bid + self.ask) / 2
+
+    @property
+    def mid_ma(self):
+        # middle of the moving average
+        return (self.bid_ma + self.ask_ma) / 2
 
 
 class SymbolData(ABC):
@@ -34,7 +41,7 @@ class SymbolData(ABC):
     load_dir: Text
 
     @abstractclassmethod
-    def load(self, adapter: Dict[Text, Text], hour: int = None):
+    def load(self, adapter: Dict[Text, Text], rolling: int = 20, hour: int = None):
         """load the quotes from csv file(s)"""
         files = files_in_path(self.load_dir)
         li = []
@@ -52,6 +59,8 @@ class SymbolData(ABC):
             li.append(df)
         self._df = pd.concat(li, axis=0, ignore_index=True)
         self._df = self._df.reset_index(drop=True)
+        self._df['bid_ma'] = self._df['bid'].rolling(rolling, min_periods=1).mean()
+        self._df['ask_ma'] = self._df['ask'].rolling(rolling, min_periods=1).mean()
         logger.info(f"{self.symbol.symbol} data was loaded!")
 
     def get_quote(self, timestamp: datetime) -> Quote:

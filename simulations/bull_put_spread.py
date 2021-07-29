@@ -19,7 +19,8 @@ def gen_results_path(filename: str):
 
 
 def run():
-    filename = "BullPutSpread_30_15_45"
+    #           strateby_delta_short_delta_long_days_vix
+    filename = "BullPutSpread_30_15_45_15"
     # simulation time period
     start = datetime(2006, 1, 4)
     end = datetime(2008, 12, 1)
@@ -33,7 +34,7 @@ def run():
     delta_long_put = 0.15
 
 
-    open_condition = VIXRange(lower=0, upper=20)
+    open_condition = VIXRange(lower=0, upper=15)
 
     close_condition = MaxLossTakeProfit(max_loss_percent=100.0, take_profit_percent=50.0)
 

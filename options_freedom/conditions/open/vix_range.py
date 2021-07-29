@@ -18,7 +18,8 @@ class VIXRange(OpenCondition):
 
     def can_open(self, time_stamp: datetime) -> bool:
         vix_quote = vix.get_quote(time_stamp)
-        if self._upper > vix_quote.mid > self._lower:
+        if (self._upper > vix_quote.mid > self._lower) and \
+                (self._upper > vix_quote.mid_ma > self._lower):
             logger.info("Condition to open satisfied!")
             return True
         return False

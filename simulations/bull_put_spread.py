@@ -22,7 +22,7 @@ def run():
     filename = "BullPutSpread_30_15_45"
     # simulation time period
     start = datetime(2006, 1, 4)
-    end = datetime(2006, 3, 1)
+    end = datetime(2008, 12, 1)
     # days for expiration target
     expiration_target = timedelta(days=45)
     # in case no option for this target is available, this is the max tolerance
@@ -42,6 +42,7 @@ def run():
     open_trade: Trade = None
     # date it was open, and the trade object
     trades: Dict[datetime, Trade] = {}
+    trades_light: Dict[datetime, Dict] = {}
 
     timeflow = TimeFlow(start, end)
     gen = timeflow.gen()
@@ -88,6 +89,7 @@ def run():
                         # open it       
                         trades[today] = trade
                         open_trade: Trade = trade
+                        print(f'Opening trade at: {today}')
                     else:
                         # not viable trade
                         pass
@@ -107,7 +109,18 @@ def run():
                 trades[open_trade.start_stamp].under_price_close = open_trade.pattern.under_price(today)
                 trades[open_trade.start_stamp].profit_loss = open_trade.p_l(today)
                 trades[open_trade.start_stamp].finish_price = open_trade.pattern.bid(today)
+                # ligth format
+                trades_light[open_trade.start_stamp] = {
+                    "start_stamp": open_trade.start_stamp,
+                    "finish_stamp": open_trade.finish_stamp,
+                    "open_price": open_trade.open_price,
+                    "finish_price": open_trade.finish_price,
+                    "profit_loss": open_trade.profit_loss,
+                    "under_price_open": open_trade.under_price_open,
+                    "under_price_close": open_trade.under_price_close
+                }
                 open_trade = None
+                print(f'Closing trade at: {today}')
         if not close:
             # change day only if no trade was closed today
             # since we can open a new one in the same day
@@ -118,6 +131,8 @@ def run():
     # persist the results
     with open(gen_results_path(filename), "wb") as f:
         pickle.dump(trades, f)
+    with open(gen_results_path(filename + '_ligth'), "wb") as f:
+        pickle.dump(trades_light, f)
     print(len(trades))
 
 

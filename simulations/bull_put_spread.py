@@ -14,29 +14,52 @@ from options_freedom.models.trade import Trade
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+
 def gen_results_path(filename: str):
-    return os.path.join(dir_path, "results/data", filename)
+    return os.path.join(dir_path, "results/data/bull_put_spread", filename)
 
 
 def run():
-    #           strateby_delta_short_delta_long_days_vix
-    filename = "BullPutSpread_30_15_45_15"
     # simulation time period
     start = datetime(2006, 1, 4)
-    end = datetime(2008, 12, 1)
+    end = datetime(2021, 6, 29)
+    vix_limits = [15.0, 20.0, 25.0]
+    delta_shorts = [0.3, 0.25]
+    delta_longs = [0.15, 0.10]
+    max_loss_percents = [100.0, 200.0]
+    take_profit_percents = [25.0, 50.0, 75.0]
+
+    ix = 0
+    for v in vix_limits:
+        for d_s in delta_shorts:
+            for d_l in delta_longs:
+                for m_l in max_loss_percents:
+                    for t_p in take_profit_percents:
+                        ix += 1
+                        print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ###')
+                        run_simulation(v, d_s, d_l, m_l, t_p, start, end)
+                        print(f'#### Finish simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ##')
+
+
+def run_simulation(
+        vix_limit: float, delta_short: float, delta_long: float,
+        max_loss_percent: float, take_profit_percent: float,
+        start: datetime, end: datetime
+        ):
+    #           strateby_delta_short_delta_long_days_vix_maxloss_takeprofit
+    filename = f"BullPutSpread_{str(int(delta_short*100))}_{str(int(delta_long*100))}_45_{str(int(vix_limit))}_{str(int(max_loss_percent))}_{str(int(take_profit_percent))}"
     # days for expiration target
     expiration_target = timedelta(days=45)
     # in case no option for this target is available, this is the max tolerance
     days_tolerance = timedelta(days=15)
     delta_tolerance = 0.1  # 10%
     # delta for the legs
-    delta_short_put = 0.30
-    delta_long_put = 0.15
+    delta_short_put = delta_short
+    delta_long_put = delta_long
 
+    open_condition = VIXRange(lower=0, upper=vix_limit)
 
-    open_condition = VIXRange(lower=0, upper=15)
-
-    close_condition = MaxLossTakeProfit(max_loss_percent=100.0, take_profit_percent=50.0)
+    close_condition = MaxLossTakeProfit(max_loss_percent=max_loss_percent, take_profit_percent=take_profit_percent)
 
 
     # status variables
@@ -118,7 +141,19 @@ def run():
                     "finish_price": open_trade.finish_price,
                     "profit_loss": open_trade.profit_loss,
                     "under_price_open": open_trade.under_price_open,
-                    "under_price_close": open_trade.under_price_close
+                    "under_price_close": open_trade.under_price_close,
+                    "max_profit": open_trade.max_profit,
+                    "max_loss": open_trade.max_loss,
+                    "short_strike": open_trade.pattern.short[0].strike,
+                    "short_expiration": open_trade.pattern.short[0].expiration,
+                    "short_delta": open_trade.pattern._option_data().get_quote(
+                        open_trade.pattern.short[0], open_trade.start_stamp
+                    ).delta,
+                    "long_strike": open_trade.pattern.long[0].strike,
+                    "long_expiration": open_trade.pattern.long[0].expiration,
+                    "long_delta": open_trade.pattern._option_data().get_quote(
+                        open_trade.pattern.long[0], open_trade.start_stamp
+                    ).delta
                 }
                 open_trade = None
                 print(f'Closing trade at: {today}')

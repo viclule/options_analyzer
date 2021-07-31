@@ -5,7 +5,8 @@ from options_freedom.pattern.base import Pattern
 
 
 class BullPutSpread(Pattern):
-    commissions: Optional[float] = 2 * comission_per_contract
+    # divided by 100 to adjust to option prices based on 100 shares
+    commissions: Optional[float] = 4 * comission_per_contract / 100.0
 
     @property
     def max_loss(self):

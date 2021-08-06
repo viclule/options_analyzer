@@ -27,22 +27,24 @@ pattern = BullPutSpread(
 
 
 def test_properties():
-    assert pattern.max_loss == 3.0  # change with comissions
-    assert pattern.max_profit == 1.4  # change with comissions
+    assert pattern.max_loss == 3.0400000000000063  # change with comissions
+    assert pattern.max_profit == 0.36000000000000004  # change with comissions
     assert pattern.expiration == datetime(2006, 2, 18)
     assert pattern.max_duration.days == 44
     assert pattern.under_price(today) == 127.22
     assert pattern.under_price(pattern.expiration) == 128.88
     assert pattern.short[0].expiration == datetime(2006, 2, 18)
     assert pattern.short[0].strike == 125
+    assert spy.get_quote(pattern.short[0], today).bid == 0.9
+    assert spy.get_quote(pattern.long[0], today).ask == 0.5
     assert pattern.long[0].expiration == datetime(2006, 2, 18)
     assert pattern.long[0].strike == 122
 
 
 def test_price():
-    assert pattern.ask(today) == 1.4
-    assert pattern.bid(today) == 1.4
-    assert pattern.ask(today + timedelta(days=28)) == 0.4
-    assert pattern.bid(today + timedelta(days=28)) == 0.4
-    assert pattern.ask(pattern.long[0].expiration) == 0.05
+    assert pattern.ask(today) == 0.4
+    assert pattern.bid(today) == 0.6
+    assert pattern.ask(today + timedelta(days=28)) == 0.1
+    assert pattern.bid(today + timedelta(days=28)) == 0.19999999999999998
+    assert pattern.ask(pattern.long[0].expiration) == - 0.05
     assert pattern.bid(pattern.long[0].expiration) == 0.05

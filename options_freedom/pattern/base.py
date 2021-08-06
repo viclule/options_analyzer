@@ -17,7 +17,7 @@ class Pattern(BaseModel):
     expiration: datetime
 
     def ask(self, timestamp: datetime) -> float:
-        """The price at the moment. Ask
+        """The price at the moment. Ask / buy
 
         Args:
             timestamp (datetime): [description]
@@ -27,7 +27,7 @@ class Pattern(BaseModel):
             float: [description]
         """
         (shorts, longs) = self._get_quotes(timestamp)
-        return sum(q.bid for q in shorts) + sum(q.ask for q in longs)
+        return sum(q.bid for q in shorts) - sum(q.ask for q in longs)
 
     def bid(self, timestamp: datetime) -> float:
         """The price at the moment. Bid
@@ -40,7 +40,7 @@ class Pattern(BaseModel):
             float: [description]
         """
         (shorts, longs) = self._get_quotes(timestamp)
-        return sum(q.ask for q in shorts) + sum(q.bid for q in longs)
+        return sum(q.ask for q in shorts) - sum(q.bid for q in longs)
 
     @property
     def max_duration(self):

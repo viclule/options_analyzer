@@ -21,11 +21,11 @@ def gen_results_path(filename: str):
 
 def run():
     # simulation time period
-    start = datetime(2006, 1, 4)
+    start = datetime(2006, 1, 1)
     end = datetime(2021, 6, 29)
     vix_limits = [15.0, 20.0, 25.0]
-    delta_shorts = [0.3, 0.25]
-    delta_longs = [0.15, 0.10]
+    delta_shorts = [0.3]
+    delta_longs = [0.15]
     max_loss_percents = [100.0, 200.0]
     take_profit_percents = [25.0, 50.0, 75.0]
 
@@ -35,8 +35,11 @@ def run():
             for d_l in delta_longs:
                 for m_l in max_loss_percents:
                     for t_p in take_profit_percents:
+                        if v == 15.0 and m_l == 100.0:
+                            print(f"Skipped the ready ones: v: {v} and m_l: {m_l}")
+                            continue
                         ix += 1
-                        print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ###')
+                        print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} --- {datetime.today()} ###')
                         run_simulation(v, d_s, d_l, m_l, t_p, start, end)
                         print(f'#### Finish simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ##')
 
@@ -57,7 +60,11 @@ def run_simulation(
     delta_short_put = delta_short
     delta_long_put = delta_long
 
-    open_condition = VIXRange(lower=0, upper=vix_limit)
+    # test in a range
+    if vix_limit <= 15.0:
+        open_condition = VIXRange(0, upper=vix_limit)
+    else:
+        open_condition = VIXRange(lower=vix_limit - 5.0, upper=vix_limit)
 
     close_condition = MaxLossTakeProfit(max_loss_percent=max_loss_percent, take_profit_percent=take_profit_percent)
 
@@ -116,15 +123,18 @@ def run_simulation(
                         print(f'Opening trade at: {today}')
                     else:
                         # not viable trade
+                        print('not viable patter fund')
                         pass
                 except Exception as e:
                     # could not find options with the right conditions
+                    print('no options found')
                     pass
 
         # try to close an open trade
         close: bool = False
         if open_trade:
             temp = open_trade.p_l(today)
+            print(f'P/L: {temp}, max profit: {open_trade.max_profit}, day: {today}')
             close = close_condition.can_close(
                 open_trade.p_l(today),
                 open_trade.max_profit)
@@ -156,13 +166,17 @@ def run_simulation(
                     ).delta
                 }
                 open_trade = None
-                print(f'Closing trade at: {today}')
-        if not close:
+                print(f'Closing trade at: {today}, open_trade: {open_trade}')
+        if not close or (close and (list(trades.values())[-1].start_stamp == list(trades.values())[-1].finish_stamp)):
+            if (close and (trades[today].start_stamp == trades[today].finish_stamp)):
+                print('###### THIS WAS SUPER WEIRD! ######')
             # change day only if no trade was closed today
             # since we can open a new one in the same day
             try:
                 today = next(gen)
+                print(f'Starting a new day: {today}')
             except StopIteration:
+                print('Finish of the iteration')
                 break
     # persist the results
     with open(gen_results_path(filename), "wb") as f:

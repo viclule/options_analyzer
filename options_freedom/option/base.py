@@ -81,7 +81,7 @@ class OptionData(ABC):
         return OptionQuote(**row.to_dict())
 
     def get_option(
-        self, type: Type, today: datetime, expiration: datetime, delta: float
+        self, type: Type, today: datetime, expiration: datetime, delta: float, exact_expiration_date: bool = False
     ) -> Option:
         """extract the closest Option for a delta and expiration date"""
         # prefilter for the given expiration
@@ -90,7 +90,7 @@ class OptionData(ABC):
             & (self._df["type"] == type.value)
         ]
         # search in the exact day, and from there outwards
-        for day in self._set_search_date(expiration):
+        for day in self._set_search_date(expiration, exact_expiration_date=exact_expiration_date):
             option_df = prefilter_df[
                 (prefilter_df["expiration"] == day.strftime("%Y-%m-%d"))
             ]
@@ -107,7 +107,7 @@ class OptionData(ABC):
             expiration=parse(row["expiration"]),
         )
 
-    def _set_search_date(self, day: datetime) -> List[datetime]:
+    def _set_search_date(self, day: datetime, exact_expiration_date: bool = False) -> List[datetime]:
         """Set of days around the desired one to search
 
         Args:
@@ -117,6 +117,8 @@ class OptionData(ABC):
             List[datetime]: [description]
         """
         days = [day]
+        if exact_expiration_date:
+            return days
         for i in range(1, 20):
             days.append(day + timedelta(days=i))
             days.append(day - timedelta(days=i))

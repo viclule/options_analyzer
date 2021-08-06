@@ -4,7 +4,7 @@ import pickle
 import os
 
 from options_freedom.symbol.base import Symbol
-from options_freedom.pattern.bull_put_spread import BullPutSpread
+from options_freedom.pattern.iron_condor import IronCondor
 from options_freedom.conditions.open.vix_range import VIXRange
 from options_freedom.option.spy import spy
 from options_freedom.option.base import Type
@@ -24,24 +24,20 @@ def run():
     start = datetime(2006, 1, 1)
     end = datetime(2021, 6, 29)
     vix_limits = [15.0, 20.0, 25.0]
-    delta_shorts = [0.3]
-    delta_longs = [0.15]
+    delta_s_l = [(0.3, 0.16), (0.16, 0.05)]
     max_loss_percents = [100.0, 200.0]
     take_profit_percents = [25.0, 50.0, 75.0]
 
     ix = 0
     for v in vix_limits:
-        for d_s in delta_shorts:
-            for d_l in delta_longs:
-                for m_l in max_loss_percents:
-                    for t_p in take_profit_percents:
-                        if v == 15.0 and m_l == 100.0:
-                            print(f"Skipped the ready ones: v: {v} and m_l: {m_l}")
-                            continue
-                        ix += 1
-                        print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} --- {datetime.today()} ###')
-                        run_simulation(v, d_s, d_l, m_l, t_p, start, end)
-                        print(f'#### Finish simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ##')
+        for d_s_l in delta_s_l:
+            for m_l in max_loss_percents:
+                for t_p in take_profit_percents:
+                    (d_s, d_l) = d_s_l
+                    ix += 1
+                    print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} --- {datetime.today()} ###')
+                    run_simulation(v, d_s, d_l, m_l, t_p, start, end)
+                    print(f'#### Finish simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ##')
 
 
 def run_simulation(
@@ -50,15 +46,12 @@ def run_simulation(
         start: datetime, end: datetime
         ):
     #           strateby_delta_short_delta_long_days_vix_maxloss_takeprofit
-    filename = f"BullPutSpread_{str(int(delta_short*100))}_{str(int(delta_long*100))}_45_{str(int(vix_limit))}_{str(int(max_loss_percent))}_{str(int(take_profit_percent))}"
+    filename = f"IronCondor_{str(int(delta_short*100))}_{str(int(delta_long*100))}_45_{str(int(vix_limit))}_{str(int(max_loss_percent))}_{str(int(take_profit_percent))}"
     # days for expiration target
     expiration_target = timedelta(days=45)
     # in case no option for this target is available, this is the max tolerance
     days_tolerance = timedelta(days=15)
     delta_tolerance = 0.1  # 10%
-    # delta for the legs
-    delta_short_put = delta_short
-    delta_long_put = delta_long
 
     # test in a range
     if vix_limit <= 15.0:
@@ -89,21 +82,37 @@ def run_simulation(
                         Type.P,
                         today,
                         today + expiration_target,
-                        delta_short_put,
+                        delta_short,
+                    )
+                    expiration_same_for_all = short_put.expiration
+                    short_call = spy.get_option(
+                        Type.C,
+                        today,
+                        expiration_same_for_all,
+                        delta_short,
+                        exact_expiration_date=True
                     )
                     long_put = spy.get_option(
                         Type.P,
                         today,
-                        today + expiration_target,
-                        delta_long_put
+                        expiration_same_for_all,
+                        delta_long,
+                        exact_expiration_date=True
+                    )
+                    long_call = spy.get_option(
+                        Type.C,
+                        today,
+                        expiration_same_for_all,
+                        delta_long,
+                        exact_expiration_date=True
                     )
 
-                    pattern = BullPutSpread(
+                    pattern = IronCondor(
                         symbol=Symbol(symbol="SPY"),
-                        short=[short_put],
-                        long=[long_put],
+                        short=[short_put, short_call],
+                        long=[long_put, long_call],
                         start_stamp=today,
-                        expiration=short_put.expiration
+                        expiration=expiration_same_for_all
                     )
                     # open it
                     trade = Trade(

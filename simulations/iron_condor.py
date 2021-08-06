@@ -22,7 +22,7 @@ def gen_results_path(filename: str):
 def run():
     # simulation time period
     start = datetime(2006, 1, 1)
-    end = datetime(2021, 6, 29)
+    end = datetime(2008, 6, 29)
     vix_limits = [15.0, 20.0, 25.0]
     delta_s_l = [(0.3, 0.16), (0.16, 0.05)]
     max_loss_percents = [100.0, 200.0]

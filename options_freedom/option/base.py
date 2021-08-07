@@ -1,10 +1,11 @@
-from typing import Text, Optional, Dict, List
+from os import stat_result
+from typing import Text, Optional, Dict, List, Tuple
 from datetime import datetime, timedelta
 from enum import Enum
 from abc import ABC, abstractclassmethod
 from dateutil.parser import parse
 
-import pandas as pd
+import modin.pandas as pd
 from pydantic import BaseModel
 
 from options_freedom.models.constants import time_stamp, expiration, option_columns
@@ -48,9 +49,9 @@ class OptionData(ABC):
             files = files_in_path(self.load_dir)
         else:
             files = files_in_path(load_dir)
-        li = []
-        for f in files:
-            df = pd.read_csv(
+        self._dfs = {}
+        for ix, f in enumerate(files):
+            df: pd.DataFrame = pd.read_csv(
                 f"{self.load_dir}/{f}",
                 usecols=list(adapter.keys()),
             )
@@ -58,22 +59,23 @@ class OptionData(ABC):
             if hour:
                 df[time_stamp] = df[time_stamp].astype(str) + f"-{str(hour)}"
             df[time_stamp] = df[time_stamp].apply(lambda x: parse(x))
-            li.append(df)
-        self._df = pd.concat(li, axis=0, ignore_index=True)
-        self._df["delta"] = self._df["delta"].abs()
-        # reduce to the deltas we are interested
-        # not reducable
-        # self._df = self._df[(0.13 < self._df["delta"]) & (self._df["delta"] < 0.32)]
-        self._df = self._df.reset_index(drop=True)
+            df["delta"] = df["delta"].abs()
+            (year, month) = __class__._get_year_month_from_filename(f)
+            print(f'Loading option file {ix}, from {len(files)}')
+            try:
+                self._dfs[year][month] = df
+            except KeyError:
+                self._dfs[year] = {}
+                self._dfs[year][month] = df
 
     def get_quote(self, option: Option, timestamp: datetime) -> OptionQuote:
         """extract the closest quote for an option and timestamp"""
         # prefilter for the given option
-        option_df = self._df[
-            (self._df["under"] == option.under)
-            & (self._df["type"] == option.type.value)
-            & (self._df["strike"] == option.strike)
-            & (self._df["expiration"] == option.expiration.strftime("%Y-%m-%d"))
+        option_df = self._dfs[timestamp.year][timestamp.month][
+            (self._dfs[timestamp.year][timestamp.month]["under"] == option.under)
+            & (self._dfs[timestamp.year][timestamp.month]["type"] == option.type.value)
+            & (self._dfs[timestamp.year][timestamp.month]["strike"] == option.strike)
+            & (self._dfs[timestamp.year][timestamp.month]["expiration"] == option.expiration.strftime("%Y-%m-%d"))
         ]
         option_df = option_df.reset_index(drop=True)
         # find the quote for the closest timestamp
@@ -85,9 +87,9 @@ class OptionData(ABC):
     ) -> Option:
         """extract the closest Option for a delta and expiration date"""
         # prefilter for the given expiration
-        prefilter_df = self._df[
-            (self._df["time_stamp"] == today)
-            & (self._df["type"] == type.value)
+        prefilter_df = self._dfs[today.year][today.month][
+            (self._dfs[today.year][today.month]["time_stamp"] == today)
+            & (self._dfs[today.year][today.month]["type"] == type.value)
         ]
         # search in the exact day, and from there outwards
         for day in self._set_search_date(expiration, exact_expiration_date=exact_expiration_date):
@@ -123,3 +125,14 @@ class OptionData(ABC):
             days.append(day + timedelta(days=i))
             days.append(day - timedelta(days=i))
         return days
+
+    @staticmethod
+    def _get_year_month_from_filename(filename: Text) -> Tuple[int, int]:
+        """Extracts year and month from string. Ex:
+        UnderlyingOptionsEODCalcs_2015-06.csv
+
+        Args:
+            filename (Text): [description]
+        """
+        text = filename.split('_')[1].split('.')[0]
+        return int(text[0:4]), int(text[5:7])

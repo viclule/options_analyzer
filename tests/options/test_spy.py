@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from options_freedom.option.base import Option, Type
-from options_freedom.option.spy import spy
+from options_freedom.option.spy import SPY, spy
 
 
 def test_get_quote():
@@ -43,3 +43,11 @@ def test_get_option_3():
     option = spy.get_option(Type.P, datetime(2006, 2, 16, 15), datetime(2006, 4, 2), 0.3)
     assert option.expiration == datetime(2006, 3, 18)
     assert option.strike == 127.0
+
+
+def test_get_year_month_from_filename():
+    filename = "UnderlyingOptionsEODCalcs_2015-06.csv"
+    (year, month) = SPY._get_year_month_from_filename(filename)
+
+    assert year == 2015
+    assert month == 6

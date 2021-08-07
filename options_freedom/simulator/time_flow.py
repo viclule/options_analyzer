@@ -5,10 +5,10 @@ opened at 10:45am
 """
 from datetime import datetime
 
-from options_freedom.option.spy import spy
+from options_freedom.symbol.vix import vix
 from options_freedom.models.constants import time_stamp
 
-market_days = sorted(list(set(spy._df[time_stamp].tolist())))
+market_days = sorted(list(set(vix._df[time_stamp].tolist())))
 
 
 class TimeFlow:

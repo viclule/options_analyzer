@@ -16,7 +16,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def gen_results_path(filename: str):
-    return os.path.join(dir_path, "results/data/bull_put_spread", filename)
+    return os.path.join(dir_path, "results/data/iron_condor", filename)
 
 
 def run():

@@ -22,9 +22,9 @@ def gen_results_path(filename: str):
 def run():
     # simulation time period
     start = datetime(2006, 1, 1)
-    end = datetime(2008, 6, 29)
-    vix_limits = [15.0, 20.0, 25.0]
-    delta_s_l = [(0.3, 0.16), (0.16, 0.05)]
+    end = datetime(2021, 6, 29)
+    vix_limits = [20.0, 25.0]
+    delta_s_l = [(0.3, 0.16)]
     max_loss_percents = [100.0, 200.0]
     take_profit_percents = [25.0, 50.0, 75.0]
 
@@ -35,7 +35,7 @@ def run():
                 for t_p in take_profit_percents:
                     (d_s, d_l) = d_s_l
                     ix += 1
-                    print(f'#### Start simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} --- {datetime.today()} ###')
+                    print(f'#### Start Iron Condor simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} --- {datetime.today()} ###')
                     run_simulation(v, d_s, d_l, m_l, t_p, start, end)
                     print(f'#### Finish simulation number {ix}, {v}, {d_s}, {d_l}, {m_l}, {t_p} ##')
 
@@ -142,40 +142,44 @@ def run_simulation(
         # try to close an open trade
         close: bool = False
         if open_trade:
-            temp = open_trade.p_l(today)
-            print(f'P/L: {temp}, max profit: {open_trade.max_profit}, day: {today}')
-            close = close_condition.can_close(
-                open_trade.p_l(today),
-                open_trade.max_profit)
-            if close or (today.replace(hour=0) == open_trade.pattern.expiration):
-                trades[open_trade.start_stamp].finish_stamp = today
-                trades[open_trade.start_stamp].under_price_close = open_trade.pattern.under_price(today)
-                trades[open_trade.start_stamp].profit_loss = open_trade.p_l(today)
-                trades[open_trade.start_stamp].finish_price = open_trade.pattern.bid(today)
-                # ligth format
-                trades_light[open_trade.start_stamp] = {
-                    "start_stamp": open_trade.start_stamp,
-                    "finish_stamp": open_trade.finish_stamp,
-                    "open_price": open_trade.open_price,
-                    "finish_price": open_trade.finish_price,
-                    "profit_loss": open_trade.profit_loss,
-                    "under_price_open": open_trade.under_price_open,
-                    "under_price_close": open_trade.under_price_close,
-                    "max_profit": open_trade.max_profit,
-                    "max_loss": open_trade.max_loss,
-                    "short_strike": open_trade.pattern.short[0].strike,
-                    "short_expiration": open_trade.pattern.short[0].expiration,
-                    "short_delta": open_trade.pattern._option_data().get_quote(
-                        open_trade.pattern.short[0], open_trade.start_stamp
-                    ).delta,
-                    "long_strike": open_trade.pattern.long[0].strike,
-                    "long_expiration": open_trade.pattern.long[0].expiration,
-                    "long_delta": open_trade.pattern._option_data().get_quote(
-                        open_trade.pattern.long[0], open_trade.start_stamp
-                    ).delta
-                }
+            try:
+                temp = open_trade.p_l(today)
+                print(f'P/L: {temp}, max profit: {open_trade.max_profit}, day: {today}')
+                close = close_condition.can_close(
+                    open_trade.p_l(today),
+                    open_trade.max_profit)
+                if close or (today.replace(hour=0) == open_trade.pattern.expiration):
+                    trades[open_trade.start_stamp].finish_stamp = today
+                    trades[open_trade.start_stamp].under_price_close = open_trade.pattern.under_price(today)
+                    trades[open_trade.start_stamp].profit_loss = open_trade.p_l(today)
+                    trades[open_trade.start_stamp].finish_price = open_trade.pattern.bid(today)
+                    # ligth format
+                    trades_light[open_trade.start_stamp] = {
+                        "start_stamp": open_trade.start_stamp,
+                        "finish_stamp": open_trade.finish_stamp,
+                        "open_price": open_trade.open_price,
+                        "finish_price": open_trade.finish_price,
+                        "profit_loss": open_trade.profit_loss,
+                        "under_price_open": open_trade.under_price_open,
+                        "under_price_close": open_trade.under_price_close,
+                        "max_profit": open_trade.max_profit,
+                        "max_loss": open_trade.max_loss,
+                        "short_strike": open_trade.pattern.short[0].strike,
+                        "short_expiration": open_trade.pattern.short[0].expiration,
+                        "short_delta": open_trade.pattern._option_data().get_quote(
+                            open_trade.pattern.short[0], open_trade.start_stamp
+                        ).delta,
+                        "long_strike": open_trade.pattern.long[0].strike,
+                        "long_expiration": open_trade.pattern.long[0].expiration,
+                        "long_delta": open_trade.pattern._option_data().get_quote(
+                            open_trade.pattern.long[0], open_trade.start_stamp
+                        ).delta
+                    }
+                    open_trade = None
+                    print(f'Closing trade at: {today}, open_trade: {open_trade}')
+            except Exception as e:
+                print(f'error processing open trade, exception: {e}')
                 open_trade = None
-                print(f'Closing trade at: {today}, open_trade: {open_trade}')
         if not close or (close and (list(trades.values())[-1].start_stamp == list(trades.values())[-1].finish_stamp)):
             if (close and (trades[today].start_stamp == trades[today].finish_stamp)):
                 print('###### THIS WAS SUPER WEIRD! ######')
@@ -188,8 +192,8 @@ def run_simulation(
                 print('Finish of the iteration')
                 break
     # persist the results
-    with open(gen_results_path(filename), "wb") as f:
-        pickle.dump(trades, f)
+    # with open(gen_results_path(filename), "wb") as f:
+    #     pickle.dump(trades, f)
     with open(gen_results_path(filename + '_ligth'), "wb") as f:
         pickle.dump(trades_light, f)
     print(len(trades))

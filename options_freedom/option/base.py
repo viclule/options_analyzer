@@ -5,7 +5,7 @@ from enum import Enum
 from abc import ABC, abstractclassmethod
 from dateutil.parser import parse
 
-import modin.pandas as pd
+import pandas as pd
 from pydantic import BaseModel
 
 from options_freedom.models.constants import time_stamp, expiration, option_columns
